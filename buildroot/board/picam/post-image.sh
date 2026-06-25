@@ -7,6 +7,10 @@ BOARD_DIR="$(dirname "$0")"
 GENIMAGE_CFG="${BOARD_DIR}/genimage.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 
+# Pi bootloader expects kernel8.img for 64-bit (arm_64bit=1).
+# Buildroot outputs the kernel as "Image" — rename it.
+cp "${BINARIES_DIR}/Image" "${BINARIES_DIR}/kernel8.img"
+
 rm -rf "${GENIMAGE_TMP}"
 
 genimage \
