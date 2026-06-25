@@ -1,0 +1,45 @@
+#!/bin/sh
+# BusyBox SysV init script for picam-app
+# Runs after all other init scripts (S99)
+
+GADGET_SCRIPT=/usr/share/picam/setup_gadget.sh
+PICAM_APP=/usr/bin/picam-app
+LOGFILE=/tmp/picam.log
+
+start() {
+    echo "Starting picam UVC gadget..."
+    mount -t configfs none /sys/kernel/config 2>/dev/null || true
+    $GADGET_SCRIPT
+    $PICAM_APP -d /dev/$(find_uvc_dev) >> $LOGFILE 2>&1 &
+    echo $! > /var/run/picam.pid
+}
+
+stop() {
+    if [ -f /var/run/picam.pid ]; then
+        kill $(cat /var/run/picam.pid) 2>/dev/null
+        rm -f /var/run/picam.pid
+    fi
+}
+
+find_uvc_dev() {
+    # Find the V4L2 OUTPUT device created by the UVC gadget function.
+    # It is the only /dev/videoN with driver name "uvc_gadget".
+    for dev in /dev/video*; do
+        name=$(v4l2-ctl -d "$dev" --info 2>/dev/null | grep "Driver name" | awk '{print $NF}')
+        if [ "$name" = "uvc_gadget" ]; then
+            basename "$dev"
+            return
+        fi
+    done
+    # Fallback
+    echo "video0"
+}
+
+case "$1" in
+    start)   start ;;
+    stop)    stop  ;;
+    restart) stop; start ;;
+    *)       echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
+
+exit 0

@@ -1,0 +1,23 @@
+# Raspberry Pi Zero 2 W — PiCam UVC firmware boot config
+
+# 64-bit ARM (Cortex-A53)
+arm_64bit=1
+
+# USB OTG in peripheral (device) mode — required for UVC gadget
+dtoverlay=dwc2,dr_mode=peripheral
+
+# HQ Camera (IMX477) on the CSI connector
+dtoverlay=imx477
+camera_auto_detect=0
+
+# GPU memory for ISP processing
+# 128 MB is sufficient for 4K MJPEG pipeline
+gpu_mem=128
+
+# Fast boot — suppress boot delay and splash
+disable_splash=1
+boot_delay=0
+force_turbo=1
+
+# Silence HDMI (we don't use a display)
+hdmi_blanking=2

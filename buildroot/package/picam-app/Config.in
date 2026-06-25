@@ -1,0 +1,9 @@
+config BR2_PACKAGE_PICAM_APP
+	bool "picam-app"
+	depends on BR2_PACKAGE_LIBCAMERA
+	depends on BR2_PACKAGE_LIBJPEG_TURBO
+	depends on BR2_INSTALL_LIBSTDCPP
+	help
+	  Pi HD Camera UVC gadget application.
+	  Streams IMX477 frames over USB as a standard UVC webcam.
+	  Exposes shutter speed, ISO and white balance as UVC controls.
