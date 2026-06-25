@@ -25,7 +25,7 @@ jobs:
             build-essential libncurses-dev bison flex libssl-dev \
             libelf-dev bc cpio rsync wget unzip git python3 \
             python3-pip python3-setuptools python3-wheel \
-            dosfstools mtools genimage
+            dosfstools mtools
 
       # ── Buildroot source ───────────────────────────────────────────────────
       - name: Cache Buildroot tarball
