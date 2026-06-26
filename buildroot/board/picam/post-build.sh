@@ -10,6 +10,10 @@ BOARD_DIR="$(dirname "$0")"
 install -D -m 0755 "$BOARD_DIR/../../../scripts/setup_gadget.sh" \
     "$TARGET/usr/share/picam/setup_gadget.sh"
 
+# Install BusyBox SysV init script
+install -D -m 0755 "$BOARD_DIR/S99picam" \
+    "$TARGET/etc/init.d/S99picam"
+
 # Install Pi camera tuning file for IMX477 (if not already in libcamera package)
 # Buildroot's libcamera installs these under /usr/share/libcamera/ipa/rpi/vc4/
 # Nothing extra needed — just verify it's there.
