@@ -48,13 +48,18 @@ add_frame() {
     shift 4
     local max_buf=$(( w * h * 2 ))  # upper bound for MJPEG frame (2 bytes/px)
 
+    # Bit rates are u32 in UVC spec; cap at USB 2.0 HS max (480 Mbps) to avoid ERANGE
+    local min_br=$(( w*h*2*8*5 ))
+    local max_br=480000000
+    [ $min_br -gt $max_br ] && min_br=$max_br
+
     mkdir -p "$M/$name"
-    echo "$w"         > "$M/$name/wWidth"
-    echo "$h"         > "$M/$name/wHeight"
-    echo "$def_iv"    > "$M/$name/dwDefaultFrameInterval"
-    echo $((w*h*2*8*5))   > "$M/$name/dwMinBitRate"   # ~5 fps worth
-    echo $((w*h*2*8*120)) > "$M/$name/dwMaxBitRate"   # ~120 fps worst case
-    echo "$max_buf"       > "$M/$name/dwMaxVideoFrameBufferSize"
+    echo "$w"       > "$M/$name/wWidth"
+    echo "$h"       > "$M/$name/wHeight"
+    echo "$def_iv"  > "$M/$name/dwDefaultFrameInterval"
+    echo "$min_br"  > "$M/$name/dwMinBitRate"
+    echo "$max_br"  > "$M/$name/dwMaxBitRate"
+    echo "$max_buf" > "$M/$name/dwMaxVideoFrameBufferSize"
 
     # Count intervals
     local n=0
