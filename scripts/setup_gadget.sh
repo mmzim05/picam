@@ -32,11 +32,10 @@ echo 3072 > "$F/streaming_maxpacket"
 echo 1    > "$F/streaming_interval"
 
 # ── Control interface ──────────────────────────────────────────────────────
+# UVC control interface is Full Speed only — no hs/ss class dirs in kernel 6.x
 mkdir -p "$F/control/header/h"
 mkdir -p "$F/control/class/fs"
-mkdir -p "$F/control/class/hs"
 ln -sf "$F/control/header/h" "$F/control/class/fs/h" 2>/dev/null || true
-ln -sf "$F/control/header/h" "$F/control/class/hs/h" 2>/dev/null || true
 
 # ── Streaming: MJPEG format ────────────────────────────────────────────────
 M="$F/streaming/mjpeg/m"
