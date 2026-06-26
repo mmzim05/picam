@@ -26,10 +26,12 @@ fi
 
 # Minimal /etc/fstab for read-only root + tmpfs for /tmp and /var
 cat > "$TARGET/etc/fstab" << 'EOF'
-/dev/mmcblk0p1  /boot   vfat    ro,noatime              0  2
-tmpfs           /tmp    tmpfs   nosuid,nodev,size=64m   0  0
-tmpfs           /var    tmpfs   nosuid,nodev,size=16m   0  0
-tmpfs           /run    tmpfs   nosuid,nodev,size=8m    0  0
+proc            /proc           proc        defaults            0  0
+sysfs           /sys            sysfs       defaults            0  0
+/dev/mmcblk0p1  /boot           vfat        ro,noatime          0  2
+tmpfs           /tmp            tmpfs       nosuid,nodev,size=64m   0  0
+tmpfs           /var            tmpfs       nosuid,nodev,size=16m   0  0
+tmpfs           /run            tmpfs       nosuid,nodev,size=8m    0  0
 EOF
 
 # Remove unnecessary getty lines from inittab — we don't want a login shell
