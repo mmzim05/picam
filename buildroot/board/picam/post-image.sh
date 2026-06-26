@@ -15,6 +15,17 @@ cp "${BINARIES_DIR}/Image" "${BINARIES_DIR}/kernel8.img"
 cp "${BOARD_DIR}/config.txt"  "${BINARIES_DIR}/config.txt"
 cp "${BOARD_DIR}/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
 
+# Copy DTB overlays from rpi-firmware build dir (Buildroot only installs
+# the main firmware files, not the overlays/ subdirectory, to BINARIES_DIR)
+RPI_FW_DIR="$(ls -d "${BUILD_DIR}"/rpi-firmware-* 2>/dev/null | head -1)"
+if [ -d "${RPI_FW_DIR}/boot/overlays" ]; then
+    mkdir -p "${BINARIES_DIR}/overlays"
+    cp "${RPI_FW_DIR}/boot/overlays/"*.dtbo "${BINARIES_DIR}/overlays/"
+else
+    echo "ERROR: rpi-firmware overlays not found at ${RPI_FW_DIR}/boot/overlays" >&2
+    exit 1
+fi
+
 rm -rf "${GENIMAGE_TMP}"
 
 genimage \
