@@ -7,7 +7,7 @@ TARGET="$1"
 BOARD_DIR="$(dirname "$0")"
 
 # Install the gadget setup script
-install -D -m 0755 "$BOARD_DIR/../../scripts/setup_gadget.sh" \
+install -D -m 0755 "$BOARD_DIR/../../../scripts/setup_gadget.sh" \
     "$TARGET/usr/share/picam/setup_gadget.sh"
 
 # Install Pi camera tuning file for IMX477 (if not already in libcamera package)
