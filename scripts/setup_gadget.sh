@@ -62,8 +62,11 @@ add_frame() {
     for iv in "$@"; do n=$((n+1)); done
     echo "$n" > "$M/$name/dwFrameIntervalType"
 
-    # Write all intervals (one per line → kernel parses newline-separated)
-    printf '%s\n' "$@" > "$M/$name/dwFrameInterval"
+    # Write each interval in a separate write() call — configfs store() parses
+    # one u32 per call; a single printf with all values only stores the first.
+    for iv in "$@"; do
+        printf '%u\n' "$iv" > "$M/$name/dwFrameInterval"
+    done
 }
 
 # ── Frame interval constants (100 ns units) ────────────────────────────────

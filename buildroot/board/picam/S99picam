@@ -9,8 +9,21 @@ LOGFILE=/tmp/picam.log
 start() {
     echo "Starting picam UVC gadget..."
     mount -t configfs none /sys/kernel/config 2>/dev/null || true
-    $GADGET_SCRIPT
-    $PICAM_APP -d /dev/$(find_uvc_dev) >> $LOGFILE 2>&1 &
+
+    if $GADGET_SCRIPT > /tmp/gadget-setup.log 2>&1; then
+        echo "Gadget setup: OK" >> /tmp/gadget-setup.log
+    else
+        echo "Gadget setup: FAILED (exit $?)" >> /tmp/gadget-setup.log
+    fi
+
+    # Write setup log to FAT boot partition so it's readable from host PC
+    mount -o remount,rw /boot 2>/dev/null || true
+    cp /tmp/gadget-setup.log /boot/picam-debug.log 2>/dev/null || true
+    ls /sys/class/udc/ >> /boot/picam-debug.log 2>/dev/null || true
+    mount -o remount,ro /boot 2>/dev/null || true
+
+    UVC_DEV="/dev/$(find_uvc_dev)"
+    $PICAM_APP -d "$UVC_DEV" >> $LOGFILE 2>&1 &
     echo $! > /var/run/picam.pid
 }
 
