@@ -14,6 +14,9 @@ install -D -m 0755 "$BOARD_DIR/../../../scripts/setup_gadget.sh" \
 install -D -m 0755 "$BOARD_DIR/S99picam" \
     "$TARGET/etc/init.d/S99picam"
 
+# Create /boot mount point for FAT partition (not created by Buildroot by default)
+mkdir -p "$TARGET/boot"
+
 # Install Pi camera tuning file for IMX477 (if not already in libcamera package)
 # Buildroot's libcamera installs these under /usr/share/libcamera/ipa/rpi/vc4/
 # Nothing extra needed — just verify it's there.

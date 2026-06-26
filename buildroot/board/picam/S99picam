@@ -17,9 +17,10 @@ start() {
     fi
 
     # Write setup log to FAT boot partition so it's readable from host PC
-    mount -o remount,rw /boot 2>/dev/null || true
+    mount -o remount,rw /boot 2>/dev/null || \
+        mount -t vfat /dev/mmcblk0p1 /boot -o rw 2>/dev/null || true
     cp /tmp/gadget-setup.log /boot/picam-debug.log 2>/dev/null || true
-    ls /sys/class/udc/ >> /boot/picam-debug.log 2>/dev/null || true
+    printf 'UDC: %s\n' "$(ls /sys/class/udc/ 2>/dev/null)" >> /boot/picam-debug.log 2>/dev/null || true
     mount -o remount,ro /boot 2>/dev/null || true
 
     UVC_DEV="/dev/$(find_uvc_dev)"
