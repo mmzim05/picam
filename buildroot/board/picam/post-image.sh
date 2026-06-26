@@ -30,6 +30,22 @@ else
     exit 1
 fi
 
+# Build boot FAT image manually so overlays/ subdir is preserved.
+# genimage's vfat 'files' list strips paths and places everything at root,
+# which breaks dtoverlay= lookups in the Pi bootloader.
+BOOT_IMG="${BINARIES_DIR}/boot.vfat"
+rm -f "$BOOT_IMG"
+mkdosfs -F 32 -n "" -C "$BOOT_IMG" $((32 * 1024))
+
+for f in kernel8.img start.elf fixup.dat bootcode.bin config.txt cmdline.txt \
+          bcm2710-rpi-zero-2-w.dtb bcm2710-rpi-zero-2.dtb; do
+    mcopy -i "$BOOT_IMG" "${BINARIES_DIR}/$f" ::/
+done
+
+mmd   -i "$BOOT_IMG" ::/overlays
+mcopy -i "$BOOT_IMG" "${BINARIES_DIR}/overlays/dwc2.dtbo"   ::/overlays/
+mcopy -i "$BOOT_IMG" "${BINARIES_DIR}/overlays/imx477.dtbo" ::/overlays/
+
 rm -rf "${GENIMAGE_TMP}"
 
 genimage \
