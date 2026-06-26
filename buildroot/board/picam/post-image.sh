@@ -15,14 +15,18 @@ cp "${BINARIES_DIR}/Image" "${BINARIES_DIR}/kernel8.img"
 cp "${BOARD_DIR}/config.txt"  "${BINARIES_DIR}/config.txt"
 cp "${BOARD_DIR}/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
 
-# Copy DTB overlays from rpi-firmware build dir (Buildroot only installs
-# the main firmware files, not the overlays/ subdirectory, to BINARIES_DIR)
+# Copy Pi firmware files from rpi-firmware build dir to BINARIES_DIR.
+# Buildroot's rpi-firmware package downloads to BUILD_DIR but does not
+# install start.elf/fixup.dat/bootcode.bin/overlays to BINARIES_DIR.
 RPI_FW_DIR="$(ls -d "${BUILD_DIR}"/rpi-firmware-* 2>/dev/null | head -1)"
-if [ -d "${RPI_FW_DIR}/boot/overlays" ]; then
+if [ -d "${RPI_FW_DIR}/boot" ]; then
+    cp "${RPI_FW_DIR}/boot/"*.elf  "${BINARIES_DIR}/" 2>/dev/null || true
+    cp "${RPI_FW_DIR}/boot/"*.dat  "${BINARIES_DIR}/" 2>/dev/null || true
+    cp "${RPI_FW_DIR}/boot/bootcode.bin" "${BINARIES_DIR}/" 2>/dev/null || true
     mkdir -p "${BINARIES_DIR}/overlays"
-    cp "${RPI_FW_DIR}/boot/overlays/"*.dtbo "${BINARIES_DIR}/overlays/"
+    cp "${RPI_FW_DIR}/boot/overlays/"*.dtbo "${BINARIES_DIR}/overlays/" 2>/dev/null || true
 else
-    echo "ERROR: rpi-firmware overlays not found at ${RPI_FW_DIR}/boot/overlays" >&2
+    echo "ERROR: rpi-firmware build dir not found at ${RPI_FW_DIR}" >&2
     exit 1
 fi
 
