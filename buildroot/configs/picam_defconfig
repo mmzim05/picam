@@ -36,7 +36,7 @@ BR2_LINUX_KERNEL_INTREE_DTS_NAME="broadcom/bcm2710-rpi-zero-2-w broadcom/bcm2710
 BR2_LINUX_KERNEL_INSTALL_TARGET=n
 
 # ── Raspberry Pi GPU firmware (start.elf, fixup.dat, overlays) ───────────
-BR2_PACKAGE_RASPBERRYPI_FIRMWARE=y
+BR2_PACKAGE_RPI_FIRMWARE=y
 
 # ── Camera and encoding ───────────────────────────────────────────────────
 BR2_PACKAGE_LIBCAMERA=y

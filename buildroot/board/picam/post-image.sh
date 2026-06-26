@@ -11,6 +11,10 @@ GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 # Buildroot outputs the kernel as "Image" — rename it.
 cp "${BINARIES_DIR}/Image" "${BINARIES_DIR}/kernel8.img"
 
+# Copy boot config files into images dir so genimage can find them
+cp "${BOARD_DIR}/config.txt"  "${BINARIES_DIR}/config.txt"
+cp "${BOARD_DIR}/cmdline.txt" "${BINARIES_DIR}/cmdline.txt"
+
 rm -rf "${GENIMAGE_TMP}"
 
 genimage \
