@@ -4,6 +4,17 @@
 
 set -e
 
+# Wrapper: run command, print it if it fails, then abort (set -e handles exit)
+must() {
+    "$@" || { echo "FAILED: $*" >&2; return 1; }
+}
+
+# Wrapper for configfs symlinks: ln -sf fails if already exists and is correct,
+# so tolerate EEXIST but not other errors.
+cflink() {
+    ln -sf "$1" "$2" 2>&1 || { echo "WARN: symlink $2 -> $1 may have failed" >&2; }
+}
+
 GADGET=/sys/kernel/config/usb_gadget/picam
 
 # ── Gadget identity ────────────────────────────────────────────────────────
@@ -35,7 +46,7 @@ echo 1    > "$F/streaming_interval"
 # UVC control interface is Full Speed only — no hs/ss class dirs in kernel 6.x
 mkdir -p "$F/control/header/h"
 mkdir -p "$F/control/class/fs"
-ln -sf "$F/control/header/h" "$F/control/class/fs/h" 2>/dev/null || true
+cflink "$F/control/header/h" "$F/control/class/fs/h"
 
 # ── Streaming: MJPEG format ────────────────────────────────────────────────
 M="$F/streaming/mjpeg/m"
@@ -101,15 +112,15 @@ add_frame "1332x990"  1332  990 "$IV_60" "$IV_30" "$IV_60" "$IV_90" "$IV_120"
 
 # ── Streaming header (links format to header) ──────────────────────────────
 mkdir -p "$F/streaming/header/h"
-ln -sf "$M" "$F/streaming/header/h/m" 2>/dev/null || true
+cflink "$M" "$F/streaming/header/h/m"
 
 mkdir -p "$F/streaming/class/fs"
 mkdir -p "$F/streaming/class/hs"
-ln -sf "$F/streaming/header/h" "$F/streaming/class/fs/h" 2>/dev/null || true
-ln -sf "$F/streaming/header/h" "$F/streaming/class/hs/h" 2>/dev/null || true
+cflink "$F/streaming/header/h" "$F/streaming/class/fs/h"
+cflink "$F/streaming/header/h" "$F/streaming/class/hs/h"
 
 # ── Link function to config and bind ──────────────────────────────────────
-ln -sf "$F" "$GADGET/configs/c.1/uvc.0" 2>/dev/null || true
+cflink "$F" "$GADGET/configs/c.1/uvc.0"
 
 # Bind to the dwc2 UDC (USB Device Controller)
 UDC=$(ls /sys/class/udc | head -1)

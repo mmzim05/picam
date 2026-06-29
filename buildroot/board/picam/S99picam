@@ -5,39 +5,57 @@
 GADGET_SCRIPT=/usr/share/picam/setup_gadget.sh
 PICAM_APP=/usr/bin/picam-app
 LOGFILE=/tmp/picam.log
+DEBUGLOG=/tmp/gadget-setup.log
 
 start() {
-    echo "Starting picam UVC gadget..."
-    mount -t configfs none /sys/kernel/config 2>/dev/null || true
+    echo "=== PiCam startup ===" > "$DEBUGLOG"
 
-    if $GADGET_SCRIPT > /tmp/gadget-setup.log 2>&1; then
-        echo "Gadget setup: OK" >> /tmp/gadget-setup.log
+    # configfs lives under sysfs; mount in case it wasn't auto-mounted
+    mount -t configfs none /sys/kernel/config 2>/dev/null || true
+    echo "configfs: $(ls /sys/kernel/config/ 2>&1)" >> "$DEBUGLOG"
+
+    echo "--- gadget setup ---" >> "$DEBUGLOG"
+    if $GADGET_SCRIPT >> "$DEBUGLOG" 2>&1; then
+        echo "Gadget setup: OK" >> "$DEBUGLOG"
     else
-        echo "Gadget setup: FAILED (exit $?)" >> /tmp/gadget-setup.log
+        echo "Gadget setup: FAILED (exit $?)" >> "$DEBUGLOG"
     fi
 
-    # Write setup log to FAT boot partition so it's readable from host PC
+    # UDC state: not-attached | attached | powered | default | addressed | configured
+    echo "--- UDC state ---" >> "$DEBUGLOG"
+    for udc in /sys/class/udc/*; do
+        printf 'UDC %s: %s\n' \
+            "$(basename "$udc")" \
+            "$(cat "$udc/state" 2>/dev/null || echo unknown)" >> "$DEBUGLOG"
+    done
+
+    echo "--- /dev/video* ---" >> "$DEBUGLOG"
+    ls /dev/video* 2>/dev/null >> "$DEBUGLOG" || echo "(none)" >> "$DEBUGLOG"
+
+    echo "--- dmesg tail ---" >> "$DEBUGLOG"
+    dmesg 2>/dev/null | tail -50 >> "$DEBUGLOG"
+
+    # Write debug log to FAT boot partition so it's readable from host PC
     mount -o remount,rw /boot 2>/dev/null || \
         mount -t vfat /dev/mmcblk0p1 /boot -o rw 2>/dev/null || true
-    cp /tmp/gadget-setup.log /boot/picam-debug.log 2>/dev/null || true
-    printf 'UDC: %s\n' "$(ls /sys/class/udc/ 2>/dev/null)" >> /boot/picam-debug.log 2>/dev/null || true
+    cp "$DEBUGLOG" /boot/picam-debug.log 2>/dev/null || true
     mount -o remount,ro /boot 2>/dev/null || true
 
+    # Find UVC gadget video node and start the app
     UVC_DEV="/dev/$(find_uvc_dev)"
     $PICAM_APP -d "$UVC_DEV" >> $LOGFILE 2>&1 &
-    echo $! > /var/run/picam.pid
+    mkdir -p /run
+    echo $! > /run/picam.pid
 }
 
 stop() {
-    if [ -f /var/run/picam.pid ]; then
-        kill $(cat /var/run/picam.pid) 2>/dev/null
-        rm -f /var/run/picam.pid
+    if [ -f /run/picam.pid ]; then
+        kill "$(cat /run/picam.pid)" 2>/dev/null || true
+        rm -f /run/picam.pid
     fi
 }
 
 find_uvc_dev() {
-    # Find the V4L2 OUTPUT device created by the UVC gadget function.
-    # It is the only /dev/videoN with driver name "uvc_gadget".
     for dev in /dev/video*; do
         name=$(v4l2-ctl -d "$dev" --info 2>/dev/null | grep "Driver name" | awk '{print $NF}')
         if [ "$name" = "uvc_gadget" ]; then
@@ -45,7 +63,6 @@ find_uvc_dev() {
             return
         fi
     done
-    # Fallback
     echo "video0"
 }
 

@@ -1,0 +1,62 @@
+#!/bin/sh
+# Bring up WiFi using credentials from /boot/wifi.conf
+# Format: SSID=YourNetwork
+#         PSK=YourPassword
+
+WIFI_CONF=/boot/wifi.conf
+LOG=/tmp/wifi.log
+
+start() {
+    # /boot may not be mounted yet — mount read-only
+    mount -t vfat /dev/mmcblk0p1 /boot -o ro,noatime 2>/dev/null || true
+
+    if [ ! -f "$WIFI_CONF" ]; then
+        echo "WiFi: no $WIFI_CONF, skipping" > "$LOG"
+        return
+    fi
+
+    SSID=$(grep '^SSID=' "$WIFI_CONF" | cut -d= -f2-)
+    PSK=$(grep '^PSK=' "$WIFI_CONF" | cut -d= -f2-)
+
+    if [ -z "$SSID" ] || [ -z "$PSK" ]; then
+        echo "WiFi: SSID or PSK missing in $WIFI_CONF" > "$LOG"
+        return
+    fi
+
+    # Generate wpa_supplicant config with plaintext PSK (wpa_supplicant handles hashing)
+    cat > /tmp/wpa.conf << EOF
+ctrl_interface=/var/run/wpa_supplicant
+network={
+    ssid="$SSID"
+    psk="$PSK"
+    key_mgmt=WPA-PSK
+}
+EOF
+    ip link set wlan0 up >> "$LOG" 2>&1
+    /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa.conf -D nl80211 >> "$LOG" 2>&1
+    udhcpc -i wlan0 -b -q -t 10 >> "$LOG" 2>&1
+
+    IP=$(ip addr show wlan0 2>/dev/null | awk '/inet /{print $2}')
+    echo "WiFi up: $IP" >> "$LOG"
+
+    # Write IP to FAT partition so it's visible from host
+    mount -o remount,rw /boot 2>/dev/null || \
+        mount -t vfat /dev/mmcblk0p1 /boot -o rw 2>/dev/null || true
+    cp "$LOG" /boot/wifi.log 2>/dev/null || true
+    mount -o remount,ro /boot 2>/dev/null || true
+}
+
+stop() {
+    killall wpa_supplicant 2>/dev/null || true
+    killall udhcpc 2>/dev/null || true
+    ip link set wlan0 down 2>/dev/null || true
+}
+
+case "$1" in
+    start)   start ;;
+    stop)    stop  ;;
+    restart) stop; start ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
+
+exit 0

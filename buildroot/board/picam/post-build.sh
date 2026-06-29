@@ -14,6 +14,10 @@ install -D -m 0755 "$BOARD_DIR/../../../scripts/setup_gadget.sh" \
 install -D -m 0755 "$BOARD_DIR/S99picam" \
     "$TARGET/etc/init.d/S99picam"
 
+# Install WiFi debug init script
+install -D -m 0755 "$BOARD_DIR/S05wifi" \
+    "$TARGET/etc/init.d/S05wifi"
+
 # Create /boot mount point for FAT partition (not created by Buildroot by default)
 mkdir -p "$TARGET/boot"
 
